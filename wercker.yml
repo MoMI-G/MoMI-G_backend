@@ -1,0 +1,31 @@
+build-nightly:
+  box: scorpil/rust:nightly
+  steps:
+    - install-packages:
+      packages: libseccomp-dev build-essential
+    #- script:
+    #    name: cargo deps
+    #    code: cargo install cargo-when
+    - script:
+        name: build
+        code: cargo build --release
+deploy:
+    steps:
+      - add-to-known_hosts:
+          hostname: $HOSTNAME
+
+      - mktemp:
+          envvar: PRIVATEKEY_PATH    
+
+      - create-file:
+          name: Create private key
+          filename: $PRIVATEKEY_PATH
+          content: $DEPROY_KEY_PRIVATE
+          overwrite: true
+
+      - script:
+          name: Transfer data
+          code: |
+            PORT=${PORT}
+            USER=${USER}
+            tar cvz target/release/graph-genome-browser-backend | ssh -i $PRIVATEKEY_PATH -p $PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=no $USER@$HOSTNAME tar zxv -C /app/ggbb/

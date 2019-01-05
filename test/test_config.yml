@@ -1,0 +1,23 @@
+bin:
+  vg: "/usr/local/bin/docker run -i quay.io/vgteam/vg:v1.5.0-581-gc51e1acb-t67-run vg"
+  graphviz: "dot"
+  fa22bit: "faToTwoBit"
+  bigbed: "bedToBigBed"
+data:
+  - name: "test"
+    chr_prefix: ""
+    source: 
+      xg: ""
+      gcsa: ""
+      ref_id: "hg38"
+      twobit: "/home/tate/genome-broser/hg38.2bit"
+      node_index: "test/path.{}.txt"
+      reference: "/home/tate/genome-browser/hg38.fa"
+    features:
+      - name: 'gene_annotation'
+        url: "test/gencode.v25.basic.annotation.Y.bed"
+        chr_prefix: "chr"
+        ref_id: "hg38"
+      - name: 'gene_name_tree'
+        url: "test//Users/tate/Downloads/gencode.v26.chr_patch_hapl_scaff.basic.annotation.wo.header.gff3"
+        chr_prefix: "chr"

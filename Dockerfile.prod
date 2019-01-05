@@ -1,0 +1,26 @@
+# ---------------------------
+# frontend container
+
+#FROM quay.io/vgteam/vg:v1.6.0-382-g0fe63b96-t133-run #as vgBinary
+FROM quay.io/vgteam/vg:v1.6.0-213-gc0c19fe5-t126-run
+
+RUN apt-get update && apt-get install -y \
+		ruby \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /vg
+
+RUN mkdir /vg/tmp; \
+    mkdir /vg/tmp/xg; \
+    mkdir /vg/sample;
+
+# ADD static /vg/static
+ADD proto/graph-helper* /vg/proto/
+ADD graph-genome-browser-backend /vg/
+
+EXPOSE 8081
+
+ENV RUST_LOG info,graph_genome_browser_backend=debug
+
+CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"] 

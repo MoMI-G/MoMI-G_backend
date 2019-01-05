@@ -1,0 +1,38 @@
+[package]
+name = "graph-genome-browser-backend"
+version = "0.1.0"
+authors = ["6br <tfdvrt@gmail.com>"]
+readme = "README.md"
+description = ""
+keywords = ["bioinformatics", "genome browser"]
+
+[dependencies]
+iron-send-file = { git = "https://github.com/6br/iron-send-file" }
+router = "*"
+log = "*"
+logger = "*"
+env_logger = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+serde_yaml = "*"
+bio = "^0.22"
+rust-htslib = "*"
+docopt = "1"
+iron-test = "*"
+regex = "*"
+iron = "*"
+params = "*"
+time = "*"
+staticfile = "*"
+mount = "*"
+url = "*"
+libbigwig = { git = "https://github.com/6br/libBigWig" }
+flate2 = "*"
+multipart = "^0.13.6"
+yaml-rust = "*"
+
+[dependencies.rocks]
+version = "*"
+default-features = false
+features = ["static-link"]

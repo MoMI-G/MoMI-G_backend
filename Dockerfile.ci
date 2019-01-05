@@ -1,0 +1,32 @@
+FROM buildpack-deps:xenial
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+
+RUN set -eux; \
+    \
+    url="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"; \
+    wget "$url"; \
+    chmod +x rustup-init; \
+    ./rustup-init -y --no-modify-path --default-toolchain nightly; \
+    rm rustup-init; \
+    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    mkdir /usr/src/app;
+
+RUN apt-get update && apt-get install -y \
+		cmake clang \
+	&& rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/app
+
+#COPY Cargo.toml Cargo.toml
+#COPY Cargo.lock Cargo.lock
+
+#RUN cargo build --release || true
+
+COPY . .
+
+#RUN rustup override set nightly-2017-11-05
+
+RUN cargo build --release;

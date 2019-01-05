@@ -1,0 +1,11 @@
+static/*
+test/*
+rocksdb/*
+tmp/*
+samples/*
+target/debug/*
+target/release/*
+!target/release/graph-genome-browser-backend
+.#*
+*.zip
+*.tar.gz

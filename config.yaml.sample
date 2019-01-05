@@ -1,0 +1,41 @@
+bin:
+  vg: "vg"
+  graphviz: "dot"
+  vg_tmp: "vg"
+  fa22bit: "faToTwobit"
+  bigbed: "bedToBigBed"
+reference:
+  chroms: "static/GRCh.json"
+  data:
+    - name: "hg19"
+      features:
+        - name: ""
+          url: ""
+          chr_prefix: ""
+    - name: "hg38"
+      features:
+        - name: ""
+          url: ""
+          chr_prefix: ""
+data:
+  - name: ""
+    desc: ""
+    chr_prefix: ""
+    ref_id: ""
+    source: 
+      #vg: ""
+      #rocksdb: ""
+      xg: ""
+      #gcsa: ""
+      #gam: ""
+      #reference: ""
+      twobit: ""
+      node_index: ""
+    features:
+      - name: ''
+        url: ''
+    static_files:
+      - name: ''
+        url: ''
+        viz: ''
+
