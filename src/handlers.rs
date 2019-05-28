@@ -533,7 +533,7 @@ impl Handler for GraphHandler {
                                         let generate_cache = match raw { false =>
                                                                          try_handler!(vg.generate_graph_to_file(path_struct, 0, &cache_file, steps, &self.config, &format!("/{}/xg/{}.xg", &self.args.flag_tmp, uuid_exist), true, &self.args.flag_interval)),
                                                                          true =>
-                                                                         try_handler!(vg.generate_graph_to_file_wo_helper(path_struct, 0, &cache_path, steps, &self.config, &format!("/{}/xg/{}.xg", &self.args.flag_tmp, uuid_exist), true, &self.args.flag_interval, gam))
+                                                                         try_handler!(vg.generate_graph_to_file_wo_helper(path_struct, 0, &cache_path, steps, &self.config, &format!("/{}/xg/{}.xg", &self.args.flag_tmp, uuid_exist), true, &self.args.flag_interval, gam, self.database.version))
                                         };
                                         match generate_cache {
                                             true => Ok(Response::with((status::Found, Redirect(url)))),
@@ -544,7 +544,7 @@ impl Handler for GraphHandler {
                                             let generate_cache = match raw { false =>
                                                                              try_handler!(vg.generate_graph_to_file(path_struct, 0, &cache_file, steps, &self.config, &self.config.data[0].source.xg, false, &self.args.flag_interval)),
                                                                              true =>
-                                                                             try_handler!(vg.generate_graph_to_file_wo_helper(path_struct, 0, &cache_path, steps, &self.config, &self.config.data[0].source.xg, false, &self.args.flag_interval, gam)),
+                                                                             try_handler!(vg.generate_graph_to_file_wo_helper(path_struct, 0, &cache_path, steps, &self.config, &self.config.data[0].source.xg, false, &self.args.flag_interval, gam, self.database.version)),
                                             };
                                         match generate_cache {
                                             true => Ok(Response::with((status::Found, Redirect(url)))),
