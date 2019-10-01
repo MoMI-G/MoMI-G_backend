@@ -168,6 +168,7 @@ impl VG {
             .expect("VG is not exist");
         if output.status.success() {
             info!("VG Version: {}", String::from_utf8_lossy(&output.stdout));
+            info!("VG minor version: {}", self.version(config));
         }
         return output.status.success()
     }
@@ -181,10 +182,10 @@ impl VG {
             .expect("VG is not exist");
         if output.status.success() {
             let version = String::from_utf8_lossy(&output.stdout);
-            let version_re = Regex::new(r"^v1\.(\d+)\.").unwrap();
+            let version_re = Regex::new(r"v1\.(\d+)\.").unwrap();
             let caps = version_re.captures(&version).unwrap();
             let cap = caps.get(1).unwrap();
-            let i: i32 = cap.as_str().parse().unwrap();
+            let i: i32 = cap.as_str().parse().unwrap_or(-1);
             return i;
         }
         let i = -1_i32;
