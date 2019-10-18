@@ -212,6 +212,7 @@ pub struct Database {
     pub rocks: String,
     pub gene_name_tree: GeneNameEachReference,
     pub graph: GraphDB,
+    pub version: i32,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

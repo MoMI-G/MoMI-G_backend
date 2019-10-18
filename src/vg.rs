@@ -1,7 +1,7 @@
 extern crate time;
 
 use std::path::Path;
-use lib::{Config, OptionalRegion};
+use lib::{Config, OptionalRegion, Database};
 use std::process::Command;
 use std::process::Stdio;
 use std::fs::File;
@@ -10,6 +10,7 @@ use std::io::Write;
 use iron::Url;
 use std::fs::metadata;
 use Args;
+use regex::Regex;
 
 // Unix-only methods.
 use std::os::unix::io::{AsRawFd, FromRawFd};
@@ -35,7 +36,8 @@ impl<T: Sync + Send> Graph<T> for VG {
 pub trait Graph {
     fn nodes_list(&self);
     fn generate_graph_to_file(&self, OptionalRegion, i64, &File, &Option<i64>, &Config, &String, bool, &String) -> Result<bool, Error>;
-    fn generate_graph_to_file_wo_helper(&self, OptionalRegion, i64, &Path, &Option<i64>, &Config, &String, bool, &String, bool) -> Result<bool, Error>;
+    fn generate_graph_to_file_wo_helper(&self, OptionalRegion, i64, &Path, &Option<i64>, &Config, &String, bool, &String, bool, i32) -> Result<bool, Error>;
+    fn version(&self, config: &Config) -> i32;
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -159,7 +161,6 @@ impl VG {
 
     pub fn test(&self, config: &Config) -> bool {
         let commands: Vec<&str> = config.bin.vg.split(" ").collect();
-        // debug!("{:?}", commands);
         let output = Command::new(commands[0])
             .args(&commands[1..])
             .arg("version")
@@ -167,8 +168,28 @@ impl VG {
             .expect("VG is not exist");
         if output.status.success() {
             info!("VG Version: {}", String::from_utf8_lossy(&output.stdout));
+            info!("VG minor version: {}", self.version(config));
         }
         return output.status.success()
+    }
+
+    pub fn version(&self, config: &Config) -> i32 {
+        let commands: Vec<&str> = config.bin.vg.split(" ").collect();
+        let output = Command::new(commands[0])
+            .args(&commands[1..])
+            .arg("version")
+            .output()
+            .expect("VG is not exist");
+        if output.status.success() {
+            let version = String::from_utf8_lossy(&output.stdout);
+            let version_re = Regex::new(r"v1\.(\d+)\.").unwrap();
+            let caps = version_re.captures(&version).unwrap();
+            let cap = caps.get(1).unwrap();
+            let i: i32 = cap.as_str().parse().unwrap_or(-1);
+            return i;
+        }
+        let i = -1_i32;
+        return i;
     }
 }
 
@@ -177,10 +198,13 @@ const MAX_INTERVAL: u64 = 50000;
 const MAX_STEP: i64 = 10;
 
 impl Graph for VG {
+    fn version(&self, config: &Config) -> i32 {
+        self.version(config)
+    }
     fn nodes_list(&self) {
         return ();
     }
-    fn generate_graph_to_file_wo_helper(&self, path: OptionalRegion, _data: i64, file: &Path, steps: &Option<i64>, config: &Config, xgfile: &String, tmp: bool, max_interval: &String, gam: bool) -> Result<bool, Error> {
+    fn generate_graph_to_file_wo_helper(&self, path: OptionalRegion, _data: i64, file: &Path, steps: &Option<i64>, config: &Config, xgfile: &String, tmp: bool, max_interval: &String, gam: bool, version: i32) -> Result<bool, Error> {
         let chunk_prefix = format!("{}{}", config.bin.vg_volume_prefix.clone().unwrap_or("".to_string()), file.to_str().unwrap());
         let file = File::create(file)?;
         let out = unsafe{Stdio::from_raw_fd(file.as_raw_fd())};
@@ -198,10 +222,16 @@ impl Graph for VG {
         info!("{:?}", commands);
         if let Some(ref gam_source) = config.data[0].source.gamindex {
             if gam {
-            debug!("{:?}", ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", format!("{}", steps).as_ref(), "-g", "-a", gam_source, "-b", chunk_prefix.as_ref()]);
+                let steps_str = format!("{}", steps);
+                let chunk_command = if version >= 9 {
+                    ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-a", gam_source, "-b", chunk_prefix.as_ref(), ""]
+                } else {
+                    ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-A", "-a", gam_source, "-b", chunk_prefix.as_ref()]
+                };
+                debug!("{:?}", chunk_command);
             let mut command1 = Command::new(&commands[0])
                 .args(&commands[1..])
-                .args(&["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", format!("{}", steps).as_ref(), "-g", "-A", "-a", gam_source, "-b", chunk_prefix.as_ref()])
+                .args(&chunk_command)
                 .stdout(Stdio::piped())
                 .spawn()?;
             //.expect("failed to spawn a process");

@@ -55,7 +55,7 @@ use vg::VG;
 use docopt::Docopt;
 
 const USAGE: &'static str = "
-MoMIG: Modular Multi-scale Integrated Genome Graph Browser Backend.
+MoMI-G: Modular Multi-scale Integrated Genome Graph Browser Backend.
 
 Usage:
   ggbb [options]

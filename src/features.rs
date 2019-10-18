@@ -5,6 +5,7 @@ use bio::io::{bed, gff};
 use bio::utils::Strand;
 use bio::utils::Strand::*;
 use vg::GraphDB;
+use vg::GraphDB::VG;
 use lib::{Config, ConfigFeature};
 use std::io::{BufReader, BufRead};
 use std::fs::File;
@@ -224,12 +225,19 @@ pub fn tmp_new(graph: GraphDB, config: &Config, db_name: String, rocksdb_init: &
         }
         gene_per_ref.insert(data.name.clone(), gene);
     }
-    return Database {
-        features: vec,
-        //coordinates: coord,
-        rocks: db_name,
-        gene_name_tree: gene_per_ref,
-        graph: graph,
+    match graph {
+        VG(graph2) => {
+            let version = graph2.version(config);
+            println!("{}", version);
+            return Database {
+                features: vec,
+                    //coordinates: coord,
+                rocks: db_name,
+                gene_name_tree: gene_per_ref,
+                graph: VG(graph2),
+                version: version,
+            }
+        }
     };
 }
 
