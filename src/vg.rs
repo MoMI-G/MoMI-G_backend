@@ -219,7 +219,7 @@ impl Graph for VG {
         // let result = panic::catch_unwind(|| {
         let command: String = match tmp { false => config.bin.vg.clone(), true => config.bin.vg_tmp.clone()};
         let commands: Vec<&str> = command.split(" ").collect();
-        info!("{:?}", commands);
+        info!("version: {}, {:?}", version, commands);
         if let Some(ref gam_source) = config.data[0].source.gamindex {
             if gam {
                 let steps_str = format!("{}", steps);
