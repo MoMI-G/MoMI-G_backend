@@ -32,7 +32,7 @@ def add_coordinate(json_data)
         o.split("\n").map{|t| t.split("\t")}.each do |t|
           if t.length > 1
             node_index = json_data['path'][index]["mapping"].find_index{ |i|  i["position"]["node_id"] == t[0].to_i }
-            json_data['path'][index]['mapping'][node_index]["position"]["coordinate"] = t[1].to_i
+            json_data['path'][index]['mapping'][node_index]["position"]["coordinate"] = t[1].to_i if node_index
           end
         end
       end
