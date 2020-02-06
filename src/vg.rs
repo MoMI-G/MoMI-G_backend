@@ -220,13 +220,19 @@ impl Graph for VG {
         let command: String = match tmp { false => config.bin.vg.clone(), true => config.bin.vg_tmp.clone()};
         let commands: Vec<&str> = command.split(" ").collect();
         info!("version: {}, {:?}", version, commands);
-        if let Some(ref gam_source) = config.data[0].source.gamindex {
+        if let Some(ref gam_index_source) = config.data[0].source.gamindex {
             if gam {
                 let steps_str = format!("{}", steps);
-                let chunk_command = if version >= 9 {
-                    ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-a", gam_source, "-b", chunk_prefix.as_ref(), ""]
+                let chunk_command = if version >= 10 {
+                    if let Some(ref gam_source) = config.data[0].source.gam {
+                        ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-a", gam_source, "-b", chunk_prefix.as_ref(), ""]
+                    } else {
+                        ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-a", gam_index_source, "-b", chunk_prefix.as_ref(), ""]
+                    }
+                } else if version >= 9 {
+                    ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-a", gam_index_source, "-b", chunk_prefix.as_ref(), ""]
                 } else {
-                    ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-A", "-a", gam_source, "-b", chunk_prefix.as_ref()]
+                    ["chunk", "-t", "4", "-x", xgpath.as_ref(), "-p", path_str.as_ref(), "-c", steps_str.as_ref(), "-g", "-A", "-a", gam_index_source, "-b", chunk_prefix.as_ref()]
                 };
                 debug!("{:?}", chunk_command);
             let mut command1 = Command::new(&commands[0])

@@ -1,10 +1,10 @@
 version: '2.2'
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    image: momig/momig-backend-dev
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile.prod
+    image: momigteam/momig-backend #-dev
     volumes:
       - ./sample/chm1:/vg/static
     ports: 
