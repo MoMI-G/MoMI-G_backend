@@ -3,8 +3,8 @@ name = "graph-genome-browser-backend"
 version = "0.1.0"
 authors = ["6br <tfdvrt@gmail.com>"]
 readme = "README.md"
-description = ""
-keywords = ["bioinformatics", "genome browser"]
+description = "MoMI-G backend server"
+keywords = ["bioinformatics", "genome browser", "graph genome"]
 
 [dependencies]
 iron-send-file = { git = "https://github.com/6br/iron-send-file" }

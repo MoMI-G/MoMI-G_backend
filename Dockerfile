@@ -27,7 +27,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-#RUN rustup override set nightly-2018-02-23 # https://github.com/rust-lang-nursery/rust-clippy/issues/2482
+RUN rustup override set nightly-2020-02-06 # ihttps://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
 
 RUN cargo build --release; \
     rm -rf src/;

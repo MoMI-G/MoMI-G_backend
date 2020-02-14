@@ -21,10 +21,11 @@ reference:
 data:
   - name: "chm1"
     desc: "2017/12/18"
-    chr_prefix: "chr"
+    chr_prefix: ""
     ref_id: "hg38"
     source: 
-      xg: "static/chm1_chr21.xg"
+#      xg: "static/chm1_chr21.xg"
+      xg: "static/grch38_na12878_gencode_paths_sort.xg"
       csv: "static/chm1_chr21.pcf"
       gam: "static/t.gam"
       gamindex: "static/t.gam.index"
