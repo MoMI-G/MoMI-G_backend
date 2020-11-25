@@ -2,7 +2,8 @@ FROM buildpack-deps:xenial as build
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
+    PATH=/usr/local/cargo/bin:$PATH \
+    RUSTFLAGS="-C target-feature=-avx2"
 
 RUN set -eux; \
     \
