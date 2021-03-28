@@ -70,4 +70,4 @@ EXPOSE 8081
 
 ENV RUST_LOG info
 
-CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"]
+CMD ["/vg/graph-genome-browser-backend", "--config=/vg/static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"]
