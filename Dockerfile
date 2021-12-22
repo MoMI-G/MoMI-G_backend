@@ -1,4 +1,4 @@
-FROM buildpack-deps:xenial as build
+FROM buildpack-deps:bionic as build
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
