@@ -221,13 +221,19 @@ impl VG {
     ) -> Result<bool, Error> {
         let out = unsafe { Stdio::from_raw_fd(file.as_raw_fd()) };
         debug!("Saved: {}", xgpath);
+        let chr_prefix = &config.data[0].chr_prefix;
         let mut command2 = Command::new("tee")
             .args(&[xgpath])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()?;
         let mut command3 = Command::new("ruby")
-            .args(&["proto/graph-helper.rb", &config.bin.vg, xgpath.as_ref()])
+            .args(&[
+                "proto/graph-helper.rb",
+                &config.bin.vg,
+                xgpath.as_ref(),
+                chr_prefix.as_ref(),
+            ])
             .stdin(unsafe { Stdio::from_raw_fd(command2.stdout.as_ref().unwrap().as_raw_fd()) })
             .stdout(out)
             .spawn()?;
@@ -304,6 +310,7 @@ impl Graph for VG {
                 .unwrap_or("".to_string()),
             file.to_str().unwrap()
         );
+        debug!("Create a temporary file: {:?}", file);
         let file = File::create(file)?;
         let out = unsafe { Stdio::from_raw_fd(file.as_raw_fd()) };
         let mut steps = steps.unwrap_or(2);
@@ -312,9 +319,15 @@ impl Graph for VG {
         }
         let xgpath = VG::replace_file_name(&path, xgfile); //&config.data[0].source.xg);
         if path.interval() > Some(max_interval.parse::<u64>().unwrap_or(MAX_INTERVAL)) {
+            debug!(
+                "path interval {:?} > the max interval {:?}",
+                path.interval(),
+                Some(max_interval.parse::<u64>().unwrap_or(MAX_INTERVAL))
+            );
             return Ok(false);
         }
         let path_str = format!("{}", path);
+        let chr_prefix = &config.data[0].chr_prefix;
         info!("{}, {}", xgpath, path_str);
         // let result = panic::catch_unwind(|| {
         let command: String = match tmp {
@@ -322,7 +335,7 @@ impl Graph for VG {
             true => config.bin.vg_tmp.clone(),
         };
         let commands: Vec<&str> = command.split(" ").collect();
-        info!("version: {}, {:?}", version, commands);
+        info!("VG version: {}, cmd: {:?}", version, commands);
         if let Some(ref gam_index_source) = config.data[0].source.gamindex {
             if gam {
                 let steps_str = format!("{}", steps);
@@ -423,6 +436,7 @@ impl Graph for VG {
                         &command,
                         xgpath.as_ref(),
                         &path.path,
+                        chr_prefix.as_ref(),
                         chunk_prefix.as_ref(),
                     ])
                     .stdin(unsafe {
@@ -434,7 +448,7 @@ impl Graph for VG {
                 let status1 = command1.wait()?; //.expect("failed to wait on child");
                 let status2 = command2.wait()?; //.expect("failed to wait on child");
                 let status3 = command3.wait()?; //.expect("failed to wait on child");
-
+                debug!("Status codes: {} {} {}", status1, status2, status3);
                 if status1.success() && status2.success() && status3.success() {
                     return Ok(true);
                 } else {
@@ -469,6 +483,7 @@ impl Graph for VG {
                 &command,
                 xgpath.as_ref(),
                 &path.path,
+                chr_prefix.as_ref(),
             ])
             .stdin(unsafe { Stdio::from_raw_fd(command2.stdout.as_ref().unwrap().as_raw_fd()) })
             .stdout(out)
@@ -477,7 +492,7 @@ impl Graph for VG {
         let status1 = command1.wait()?; //.expect("failed to wait on child");
         let status2 = command2.wait()?; //.expect("failed to wait on child");
         let status3 = command3.wait()?; //.expect("failed to wait on child");
-        info!("{} {} {}", status1, status2, status3);
+        debug!("Status codes: {} {} {}", status1, status2, status3);
 
         if status1.success() && status2.success() && status3.success() {
             return Ok(true);
@@ -507,6 +522,7 @@ impl Graph for VG {
             return Ok(false);
         }
         let path = format!("{}", path);
+        let chr_prefix = &config.data[0].chr_prefix;
         debug!("{}, {}", xgpath, path);
         let commands: Vec<&str> = match tmp {
             false => config.bin.vg.split(" ").collect(),
@@ -534,7 +550,12 @@ impl Graph for VG {
             .spawn()?;
         //.expect("failed to spawn a process");
         let mut command3 = Command::new("ruby")
-            .args(&["proto/graph-helper.rb", &config.bin.vg, xgpath.as_ref()])
+            .args(&[
+                "proto/graph-helper.rb",
+                &config.bin.vg,
+                xgpath.as_ref(),
+                chr_prefix.as_ref(),
+            ])
             .stdin(unsafe { Stdio::from_raw_fd(command2.stdout.as_ref().unwrap().as_raw_fd()) })
             .stdout(out)
             .spawn()?;
@@ -544,6 +565,7 @@ impl Graph for VG {
         let status1 = command1.wait()?; //.expect("failed to wait on child");
         let status2 = command2.wait()?; //.expect("failed to wait on child");
         let status3 = command3.wait()?; //.expect("failed to wait on child");
+        debug!("Status codes: {} {} {}", status1, status2, status3);
 
         if status1.success() && status2.success() && status3.success() {
             return Ok(true);

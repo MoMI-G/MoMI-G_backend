@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-# Usage: `ruby graph-helper.rb <path-for-vg> <path-for-xg>`
+# Usage: `ruby graph-helper.rb <path-for-vg> <path-for-xg> <chr_prefix>`
 # JSON's input is required via STDIN.
 
 require 'json'
@@ -7,6 +7,7 @@ require 'open3'
 
 bin = ARGV[0]
 XG = ARGV[1]
+CHR_PREFIX = ARGV[2] || "chr"
 
 bin = bin.split(' ') if bin
 BIN_DOCKER = bin ? bin[0..-2] : 'echo'
@@ -25,7 +26,7 @@ def sankey(json_data)
 
   if json_data['path']
   json_data['path'].each do |path|
-    pathname = (path['name'].start_with?("chr") ? "" : "chr") + path["name"]
+    pathname = (path['name'].start_with?(CHR_PREFIX) ? "" : CHR_PREFIX) + path["name"]
     path['mapping'].each do |t|
       path_hash[t['position']['node_id']].store(pathname, [t['rank']])
     end

@@ -90,7 +90,7 @@ pub fn region_to_feature(
     let mut vec: Vec<Vec<Feature>> = vec![];
     for feature in config.data[0].features.iter() {
         let path = Path::new(&feature.url);
-        let chr_prefix = "".to_string(); //FIXME() feature.chr_prefix.clone().unwrap_or("".to_string());
+        let chr_prefix = feature.chr_prefix.clone().unwrap_or("".to_string());
         match path.extension().unwrap().to_str() {
             Some("bed") if *track_type == "bed".to_string() => {
                 vec.push(giggle(feature, &coord, chr_prefix))
@@ -120,7 +120,8 @@ pub fn region_to_feature_map(
     let mut vec: HashMap<String, Vec<Feature>> = HashMap::new();
     for feature in config.data[0].features.iter() {
         let path = Path::new(&feature.url);
-        let chr_prefix = "".to_string(); //FIXME() feature.chr_prefix.clone().unwrap_or("".to_string());
+        let chr_prefix = feature.chr_prefix.clone().unwrap_or("".to_string());
+
         match path.extension().unwrap().to_str() {
             Some("bed") if *track_type == "bed".to_string() => {
                 vec.insert(feature.url.clone(), giggle(feature, &coord, chr_prefix));
@@ -184,9 +185,9 @@ fn node_id_to_feature_old(
 
 fn libbigbed_simple(feature: &ConfigFeature, coord: &Region, prefix: String) -> Vec<Feature> {
     let path = &feature.url;
-    debug!("{:?} {:?}", path, coord);
     let path_loc = CString::new(path.clone()).unwrap();
     let path_str = CString::new(prefix + coord.path.as_ref()).unwrap();
+
     let mut vec: Vec<Feature> = vec![];
     unsafe {
         if bwInit(1 << 17) != 0 {

@@ -21,21 +21,16 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /usr/src/app
 
-#COPY Cargo.toml Cargo.toml
-#COPY Cargo.lock Cargo.lock
-
-#RUN cargo build --release || true
-
 COPY . .
 
-RUN rustup override set nightly-2020-02-06 # ihttps://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
+RUN rustup override set nightly-2020-02-06 # https://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
 
 RUN cargo build --release; \
     rm -rf src/;
 
 # ---------------------------
 # frontend container
-FROM quay.io/vgteam/vg:v1.6.0-213-gc0c19fe5-t126-run
+FROM quay.io/vgteam/vg:v1.25.0
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -43,7 +38,7 @@ ARG VCS_REF
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.vcs-url="https://github.com/MoMI-G/MoMI-G/" \
-      org.label-schema.schema-version="1.0.0-rc1"
+      org.label-schema.schema-version="1.0.0"
 
 # Add dependency
 RUN apt-get update && apt-get install -y \
@@ -53,21 +48,16 @@ RUN apt-get update && apt-get install -y \
 # Create app directory
 WORKDIR /vg
 
+RUN mkdir /vg/tmp; \
+    mkdir /vg/tmp/xg; \
+    mkdir /vg/sample;
+
+# ADD static /vg/static
 ADD proto/graph-helper* /vg/proto/
 COPY --from=build /usr/src/app/target/release/graph-genome-browser-backend /vg/
 
-RUN mkdir /vg/tmp; \
-    mkdir /vg/tmp/xg; \
-    mkdir /vg/static; \
-    wget -O - https://www.dropbox.com/s/56r7zadwcc1etmr/chm1.tar.gz?dl=0 | tar xzv -C /vg/static; \
-    wget -O - ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_27/gencode.v27.basic.annotation.gff3.gz | gunzip -c | grep -v "#" > static/gencode.v27.basic.annotation.gff3; \
-    wget -O - ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_27/GRCh37_mapping/gencode.v27lift37.basic.annotation.gff3.gz | gunzip -c | grep -v "#" > static/gencode.v27lift37.basic.annotation.gff3; \
-    chmod 755 /vg;
-
-ADD sample/chm1/config.yaml /vg/static
-
 EXPOSE 8081
 
-ENV RUST_LOG info
+ENV RUST_LOG info,graph_genome_browser_backend=debug
 
-CMD ["/vg/graph-genome-browser-backend", "--config=/vg/static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"]
+CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"] 

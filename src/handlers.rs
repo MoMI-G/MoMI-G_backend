@@ -264,7 +264,12 @@ impl Handler for RegionHandler {
             let path_vector: Vec<Region> = path
                 .split(",")
                 .flat_map(|a| {
-                    Region::new_with_prefix(a.to_string(), &self.config.data[0].chr_prefix)
+                    Region::new_with_prefix(
+                        a.to_string()
+                            .trim_start_matches(&self.config.data[0].chr_prefix)
+                            .to_string(),
+                        &"".to_string(),
+                    )
                 })
                 .collect();
             let features = regions_to_feature_map(
@@ -277,9 +282,12 @@ impl Handler for RegionHandler {
             Ok(Response::with((status::Ok, post)))
         } else {
             let path_struct: Region = try_handler!(Region::new_with_prefix(
-                path.to_string(),
-                &self.config.data[0].chr_prefix
+                path.to_string()
+                    .trim_start_matches(&self.config.data[0].chr_prefix)
+                    .to_string(),
+                &"".to_string()
             ));
+
             let features = region_to_feature_map(
                 &self.config.clone(),
                 &format.to_string(),
@@ -583,7 +591,7 @@ impl Handler for GraphHandler {
                 &self.config.data[0].chr_prefix
             )),
         };
-        info!("{}", path_struct);
+        info!("Range: {}", path_struct);
         let cache_filename = (if raw { "raw_" } else { "" }).to_string()
             + &uuid.clone().map(|t| t + "_").unwrap_or("".to_string())
             + &path_struct.uuid()
@@ -594,14 +602,17 @@ impl Handler for GraphHandler {
             &url_str,
             &(self.args.flag_api.clone() + "cache/" + &cache_filename)
         ));
-        info!("{}, {}", url, cache_str);
+        debug!("Redirect URL: {}, {}", url, cache_str);
         match metadata(cache_path) {
             Ok(ref n) if cache && n.len() > 1 => Ok(Response::with((status::Found, Redirect(url)))),
             _ => {
                 let cache_file = try_handler!(File::create(cache_path));
                 match self.database.graph {
                     GraphDB::VG(ref vg) => match path_struct.inverted() {
-                        Some(true) => Ok(Response::with((status::BadRequest))),
+                        Some(true) => Ok(Response::with((
+                            status::BadRequest,
+                            "Path region is inverted",
+                        ))),
                         _ => match uuid {
                             Some(uuid_exist) => {
                                 debug!("uuid: {}", uuid_exist);

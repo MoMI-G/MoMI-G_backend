@@ -50,7 +50,7 @@ impl OptionalRegion {
         None
     }
 
-    pub fn new_with_prefix(path: String, chr_prefix: &str) -> Result<Self, Box<Error>> {
+    pub fn new_with_prefix(path: String, chr_prefix: &str) -> Result<Self, Box<dyn Error>> {
         let re = Regex::new(r"^(.+):(\d*)-?(\d*)$").unwrap();
         let caps = try!(re.captures(&path).ok_or("Parse Error"));
         let mut path_str = try!(caps.get(1).ok_or("Parse Path Error")).as_str();
