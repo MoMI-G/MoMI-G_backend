@@ -33,6 +33,6 @@ multipart = "^0.13.6"
 yaml-rust = "*"
 
 [dependencies.rocks]
-version = "*"
+version = "0.1.10"
 default-features = false
 features = ["static-link"]
