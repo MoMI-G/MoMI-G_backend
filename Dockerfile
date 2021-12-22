@@ -23,7 +23,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-#RUN rustup override set nightly-2020-02-06 # https://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
+RUN rustup override set nightly-2020-02-06 # https://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
 
 RUN cargo build --release; \
     rm -rf src/;
