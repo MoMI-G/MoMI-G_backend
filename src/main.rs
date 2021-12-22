@@ -1,7 +1,6 @@
 #![feature(rustc_private)]
 #![feature(plugin)]
 #![feature(extern_prelude)]
-
 #![allow(dead_code)] // Remove at release.
 
 #[macro_use]
@@ -12,47 +11,47 @@ extern crate log;
 
 #[macro_use]
 extern crate serde_json;
-extern crate libbigwig;
 extern crate bio;
-extern crate serde_yaml;
-extern crate regex;
-extern crate url;
-extern crate rocks;
+extern crate libbigwig;
 extern crate multipart;
+extern crate regex;
+extern crate rocks;
+extern crate serde_yaml;
+extern crate url;
 
-extern crate iron;
-extern crate logger;
 extern crate env_logger;
-extern crate router;
+extern crate iron;
 extern crate iron_send_file;
-extern crate time;
-extern crate staticfile;
+extern crate logger;
 extern crate mount;
+extern crate router;
+extern crate staticfile;
+extern crate time;
 
 extern crate flate2;
 
+mod annotations;
+mod features;
 mod handlers;
 mod lib;
-mod features;
-mod vg;
 mod utils;
-mod annotations;
+mod vg;
 
-use router::Router;
+use features::tmp_new;
+use handlers::*;
 use iron::prelude::*;
 use iron::Iron;
 use logger::Logger;
-use handlers::*;
-use features::{tmp_new};
+use router::Router;
 use vg::GraphDB;
 
+use mount::Mount;
+use staticfile::Static;
 use std::path::Path;
 use std::process;
-use staticfile::Static;
-use mount::Mount;
 
-use vg::VG;
 use docopt::Docopt;
+use vg::VG;
 
 const USAGE: &'static str = "
 MoMI-G: Modular Multi-scale Integrated Genome Graph Browser Backend.
@@ -106,8 +105,8 @@ fn main() {
     let (logger_before, logger_after) = Logger::new(None);
 
     let args: Args = Docopt::new(USAGE)
-                            .and_then(|d| d.deserialize())
-                            .unwrap_or_else(|e| e.exit());
+        .and_then(|d| d.deserialize())
+        .unwrap_or_else(|e| e.exit());
     if args.flag_verbose {
         println!("Run `RUST_LOG=info cargo run` to see logs.");
         println!("{:?}", args);
@@ -121,10 +120,10 @@ fn main() {
         Err(why) => panic!("couldn't parse config: {:?}", why),
         Ok(conf) => conf,
     };
-    let vg_inner = VG{};
+    let vg_inner = VG {};
 
     if !args.flag_notest {
-        if !vg_inner.test(&deserialized_config){
+        if !vg_inner.test(&deserialized_config) {
             return;
         }
     }

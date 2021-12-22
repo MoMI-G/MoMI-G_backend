@@ -1,36 +1,28 @@
 extern crate serde_yaml;
 
 use features::FeatureDB;
-use std::collections::BTreeMap;
-use vg::{GraphDB};
-use std::fmt;
 use regex::Regex;
+use std::collections::BTreeMap;
 use std::error::Error;
+use std::fmt;
+use vg::GraphDB;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct OptionalRegion {
     pub path: String,
     pub start: Option<u64>,
-    pub stop: Option<u64>
+    pub stop: Option<u64>,
 }
 
 impl fmt::Display for OptionalRegion {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Use `self.number` to refer to each positional data point.
         match self.start {
-            Some (start) => {
-                match self.stop {
-                    Some (stop) => {
-                        write!(f, "{}:{}-{}", self.path, start, stop)
-                    }
-                    None => {
-                        write!(f, "{}:{}", self.path, start)
-                    }
-                }
-            }
-            None => {
-                write!(f, "{}", self.path)
-            }
+            Some(start) => match self.stop {
+                Some(stop) => write!(f, "{}:{}-{}", self.path, start, stop),
+                None => write!(f, "{}:{}", self.path, start),
+            },
+            None => write!(f, "{}", self.path),
         }
     }
 }
@@ -40,9 +32,9 @@ impl OptionalRegion {
         if let Some(start) = self.start {
             if let Some(stop) = self.stop {
                 if start < stop {
-                    return Some (stop - start)
+                    return Some(stop - start);
                 } else {
-                    return Some (start - stop)
+                    return Some(start - stop);
                 }
             }
         }
@@ -52,7 +44,7 @@ impl OptionalRegion {
     pub fn inverted(&self) -> Option<bool> {
         if let Some(_start) = self.start {
             if let Some(_stop) = self.stop {
-                return Some(self.start > self.stop)
+                return Some(self.start > self.stop);
             }
         }
         None
@@ -81,7 +73,11 @@ impl OptionalRegion {
         }
         let start = caps.get(2).and_then(|t| t.as_str().parse::<u64>().ok());
         let stop = caps.get(3).and_then(|t| t.as_str().parse::<u64>().ok());
-        return Ok(OptionalRegion{path: path_string, start: start, stop: stop})
+        return Ok(OptionalRegion {
+            path: path_string,
+            start: start,
+            stop: stop,
+        });
     }
 
     pub fn new(path: String) -> Result<Self, Box<Error>> {
@@ -90,13 +86,16 @@ impl OptionalRegion {
         let path = try!(caps.get(1).ok_or("Parse Path Error"));
         let start = caps.get(2).and_then(|t| t.as_str().parse::<u64>().ok());
         let stop = caps.get(3).and_then(|t| t.as_str().parse::<u64>().ok());
-        return Ok(OptionalRegion{path: path.as_str().to_string(), start: start, stop: stop})
+        return Ok(OptionalRegion {
+            path: path.as_str().to_string(),
+            start: start,
+            stop: stop,
+        });
     }
 
     pub fn uuid(self: &OptionalRegion) -> String {
         return format!("{}", self);
     }
-
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -155,9 +154,17 @@ impl Region {
         let stop = try!(caps.get(3).ok_or("Parse Stop Position Error"));
         let start_str: &str = start.as_str().as_ref();
         let stop_str: &str = stop.as_str().as_ref();
-        let start_u64: u64 = try!(start_str.parse::<u64>().map_err(|e| "Parse Int Error, ".to_string() + e.description()));
-        let stop_u64: u64 = try!(stop_str.parse::<u64>().map_err(|e| "Parse Int Error, ".to_string() + e.description()));
-        Ok(Region{path: path_string, start: start_u64, stop: stop_u64})
+        let start_u64: u64 = try!(start_str
+            .parse::<u64>()
+            .map_err(|e| "Parse Int Error, ".to_string() + e.description()));
+        let stop_u64: u64 = try!(stop_str
+            .parse::<u64>()
+            .map_err(|e| "Parse Int Error, ".to_string() + e.description()));
+        Ok(Region {
+            path: path_string,
+            start: start_u64,
+            stop: stop_u64,
+        })
     }
 
     pub fn new(path: String) -> Result<Self, Box<Error>> {
@@ -168,9 +175,17 @@ impl Region {
         let stop = try!(caps.get(3).ok_or("Parse Stop Position Error"));
         let start_str: &str = start.as_str().as_ref();
         let stop_str: &str = stop.as_str().as_ref();
-        let start_u64: u64 = try!(start_str.parse::<u64>().map_err(|e| "Parse Int Error, ".to_string() + e.description()));
-        let stop_u64: u64 = try!(stop_str.parse::<u64>().map_err(|e| "Parse Int Error, ".to_string() + e.description()));
-        Ok(Region{path: path.as_str().to_string(), start: start_u64, stop: stop_u64})
+        let start_u64: u64 = try!(start_str
+            .parse::<u64>()
+            .map_err(|e| "Parse Int Error, ".to_string() + e.description()));
+        let stop_u64: u64 = try!(stop_str
+            .parse::<u64>()
+            .map_err(|e| "Parse Int Error, ".to_string() + e.description()));
+        Ok(Region {
+            path: path.as_str().to_string(),
+            start: start_u64,
+            stop: stop_u64,
+        })
     }
 
     pub fn uuid(self: &Region) -> String {
@@ -190,8 +205,22 @@ mod tests {
     fn region_works() {
         assert_eq!(Region::new("".to_string()).ok(), None);
         assert_eq!(Region::new(":10-20".to_string()).ok(), None);
-        assert_eq!(Region::new("chr1:12000-12001".to_string()).ok(), Some(Region{path: "chr1".to_string(), start: 12000, stop: 12001}));
-        assert_eq!(Region::new("chr1:1200943-1201000".to_string()).ok(), Some(Region{path: "chr1".to_string(), start: 1200943, stop: 1201000}));
+        assert_eq!(
+            Region::new("chr1:12000-12001".to_string()).ok(),
+            Some(Region {
+                path: "chr1".to_string(),
+                start: 12000,
+                stop: 12001
+            })
+        );
+        assert_eq!(
+            Region::new("chr1:1200943-1201000".to_string()).ok(),
+            Some(Region {
+                path: "chr1".to_string(),
+                start: 1200943,
+                stop: 1201000
+            })
+        );
     }
 
     #[test]
@@ -228,13 +257,13 @@ pub struct ConfigBin {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConfigRef {
     pub chroms: String,
-    pub data: Vec<ConfigRefItem>
+    pub data: Vec<ConfigRefItem>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConfigRefItem {
     pub name: String,
-    pub features: Vec<ConfigFeature>
+    pub features: Vec<ConfigFeature>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -257,8 +286,7 @@ pub struct ConfigFeature {
     pub name: String,
     pub url: String,
     pub chr_prefix: Option<String>,
-    pub viz: Option<String>
-    // pub ref_id: String,
+    pub viz: Option<String>, // pub ref_id: String,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

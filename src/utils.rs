@@ -1,8 +1,8 @@
-use std::path::Path;
-use std::fs::File;
-use std::error::Error;
-use std::io::prelude::*;
 use iron::Url;
+use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
 use url;
 
 pub fn file_read(path_string: &String, s: &mut String) {
@@ -16,8 +16,7 @@ pub fn file_read(path_string: &String, s: &mut String) {
     //let mut s = String::new();
     match config.read_to_string(s) {
         Err(why) => panic!("couldn't read {}: {}", display, Error::description(&why)),
-        Ok(_) => {}
-        //print!("{} contains:\n{}", display, s),
+        Ok(_) => {} //print!("{} contains:\n{}", display, s),
     }
 }
 
@@ -28,4 +27,3 @@ pub fn url_compose(url: &url::Url, path: &str) -> Result<Url, String> {
     // println!("{}", new_url);
     Url::parse(&new_url)
 }
-

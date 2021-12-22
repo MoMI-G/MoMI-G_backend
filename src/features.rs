@@ -1,18 +1,17 @@
-
-use std::path::Path;
-use std::collections::HashMap;
 use bio::io::{bed, gff};
 use bio::utils::Strand;
 use bio::utils::Strand::*;
+use lib::{Config, ConfigFeature};
+use lib::{Database, GeneNameEachReference, GeneNameTree, Region};
+use rocks::rocksdb::*;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::mem::*;
+use std::path::Path;
 use vg::GraphDB;
 use vg::GraphDB::VG;
-use lib::{Config, ConfigFeature};
-use std::io::{BufReader, BufRead};
-use std::fs::File;
-use lib::{Database, GeneNameTree, Region, GeneNameEachReference};
-use rocks::rocksdb::*;
-use std::mem::*;
-use std::error::Error;
 
 // NodeId to corresponding feature items.
 type Features = HashMap<u64, Vec<Feature>>;
@@ -20,7 +19,6 @@ pub type FeatureDB = Vec<Features>;
 
 // Move it to graph, needed.
 type CoordToNodeId = HashMap<String, Vec<NodeId>>; // Vec<NodeId> required as sorted by coord.
-
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 struct NodeId {
@@ -83,7 +81,7 @@ fn record_to_nodes(
             name: record.name().unwrap_or_default().to_string(),
             is_reverse: opt_strand_to_opt_bool(record.strand()),
             attributes: vec![],
-            value: None
+            value: None,
         },
     );
 
@@ -99,7 +97,7 @@ fn record_to_nodes(
                 name: record.name().unwrap_or_default().to_string(),
                 is_reverse: opt_strand_to_opt_bool(record.strand()),
                 attributes: vec![],
-                value: None
+                value: None,
             },
         );
     }
@@ -111,95 +109,90 @@ fn record_to_nodes(
 //pub fn tmp_new(graph: Arc<Graph>, config: &Config) -> Database {
 pub fn tmp_new(graph: GraphDB, config: &Config, db_name: String, rocksdb_init: &bool) -> Database {
     let chroms = vec![
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-        "21",
-        "22",
-        "X",
-        "Y",
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+        "17", "18", "19", "20", "21", "22", "X", "Y",
     ];
     let hashmap = CoordToNodeId::new();
     if *rocksdb_init || !Path::new(&db_name).exists() {
-        if let Ok(cf) = DB::open(&Options::default().map_db_options(|db| db.create_if_missing(true)), db_name.clone()) {
-    'iter: for chr in chroms.iter() {
-        if let Some(ref path) = config.data[0].source.node_index {
-        let ref prefix = config.data[0].chr_prefix;
-        let chr_name = prefix.clone() + chr;
-        let path_string = path.clone().replace("{}", &chr_name);
-        let path = Path::new(&path_string);
-        debug!("Chromosome:  {:?}, {:?}", chr, path);
+        if let Ok(cf) = DB::open(
+            &Options::default().map_db_options(|db| db.create_if_missing(true)),
+            db_name.clone(),
+        ) {
+            'iter: for chr in chroms.iter() {
+                if let Some(ref path) = config.data[0].source.node_index {
+                    let ref prefix = config.data[0].chr_prefix;
+                    let chr_name = prefix.clone() + chr;
+                    let path_string = path.clone().replace("{}", &chr_name);
+                    let path = Path::new(&path_string);
+                    debug!("Chromosome:  {:?}, {:?}", chr, path);
 
-        let file = match File::open(path) {
-            Ok(f) => f,
-            Err(e) => {
-                debug!("could not open {}; skipping.", e.description());
-                continue 'iter;
-            }
-        };
-        /*
-        let file_gz = match extract_file(path) {
-            Ok(f) => f,
-            Err(e) => {continue 'iter;}
-        };
-        */
-
-        let br = BufReader::new(file);
-        let mut last_node: Option<NodeId> = None;
-        for line in br.lines() {
-            match line {
-                Ok(l) => {
-                    let items: Vec<u64> =
-                        l.split("\t").map(|a| a.parse::<u64>().unwrap()).collect();
-                    if items.len() > 1 {
-                        if let Some(item) = last_node {
-                            let reg = Region{ path: (*chr).to_string(), start: item.coord, stop: items[1] };
-                            let raw_bytes : [u8; 8] = unsafe {transmute(item.id)};
-                                if let Err(err) = cf.put(&WriteOptions::default(), &raw_bytes, reg.uuid().as_bytes()){
-                              debug!("{:?} at {}", err, item.id)
-                            }
+                    let file = match File::open(path) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            debug!("could not open {}; skipping.", e.description());
+                            continue 'iter;
                         }
-                        last_node = Some(NodeId {
-                          id: items[0],
-                          coord: items[1],
-                         });
-                    } else {
-                        continue;
+                    };
+                    /*
+                    let file_gz = match extract_file(path) {
+                        Ok(f) => f,
+                        Err(e) => {continue 'iter;}
+                    };
+                    */
+
+                    let br = BufReader::new(file);
+                    let mut last_node: Option<NodeId> = None;
+                    for line in br.lines() {
+                        match line {
+                            Ok(l) => {
+                                let items: Vec<u64> =
+                                    l.split("\t").map(|a| a.parse::<u64>().unwrap()).collect();
+                                if items.len() > 1 {
+                                    if let Some(item) = last_node {
+                                        let reg = Region {
+                                            path: (*chr).to_string(),
+                                            start: item.coord,
+                                            stop: items[1],
+                                        };
+                                        let raw_bytes: [u8; 8] = unsafe { transmute(item.id) };
+                                        if let Err(err) = cf.put(
+                                            &WriteOptions::default(),
+                                            &raw_bytes,
+                                            reg.uuid().as_bytes(),
+                                        ) {
+                                            debug!("{:?} at {}", err, item.id)
+                                        }
+                                    }
+                                    last_node = Some(NodeId {
+                                        id: items[0],
+                                        coord: items[1],
+                                    });
+                                } else {
+                                    continue;
+                                }
+                            }
+                            Err(e) => {
+                                debug!("ignoring error {}", e);
+                                continue;
+                            }
+                        };
+                    }
+                    if let Some(item) = last_node {
+                        // coord.insert(item.id, Region{ path: (*chr).to_string(), start: item.coord, stop: item.coord + 1000 }); //Todo seems to wrong code.
+                        let reg = Region {
+                            path: (*chr).to_string(),
+                            start: item.coord,
+                            stop: item.coord + 1000,
+                        };
+                        let raw_bytes: [u8; 8] = unsafe { transmute(item.id) };
+                        if let Err(err) =
+                            cf.put(&WriteOptions::default(), &raw_bytes, reg.uuid().as_bytes())
+                        {
+                            debug!("{:?} at {}", err, item.id)
+                        }
                     }
                 }
-                Err(e) => {
-                    debug!("ignoring error {}", e);
-                    continue;
-                }
-            };
-        }
-        if let Some(item) = last_node {
-            // coord.insert(item.id, Region{ path: (*chr).to_string(), start: item.coord, stop: item.coord + 1000 }); //Todo seems to wrong code.
-            let reg = Region{ path: (*chr).to_string(), start: item.coord, stop: item.coord + 1000 };
-            let raw_bytes : [u8; 8] = unsafe {transmute(item.id)};
-                if let Err(err) = cf.put(&WriteOptions::default(), &raw_bytes, reg.uuid().as_bytes()){
-              debug!("{:?} at {}", err, item.id)
             }
-        }
-        }
-        }
         }
     }
     let mut vec: FeatureDB = FeatureDB::new();
@@ -207,21 +200,21 @@ pub fn tmp_new(graph: GraphDB, config: &Config, db_name: String, rocksdb_init: &
     for data in config.reference.data.iter() {
         let mut gene: GeneNameTree = GeneNameTree::new();
         for feature in data.features.iter() {
-        // It limits only "config,reference Items."
-        let path = Path::new(&feature.url);
-        info!("Parsing:  {:?}", path);
-        match path.extension().unwrap_or_default().to_str() {
-            Some("bed") => {
-                vec.push(tmp_new_internal(feature, &graph, &hashmap));
+            // It limits only "config,reference Items."
+            let path = Path::new(&feature.url);
+            info!("Parsing:  {:?}", path);
+            match path.extension().unwrap_or_default().to_str() {
+                Some("bed") => {
+                    vec.push(tmp_new_internal(feature, &graph, &hashmap));
+                }
+                Some("gff3") => {
+                    tmp_new_gene_internal(feature, &mut gene, gff::GffType::GFF3);
+                }
+                Some("gtf") => {
+                    tmp_new_gene_internal(feature, &mut gene, gff::GffType::GTF2);
+                }
+                _ => println!("Unsupported format {:?}", path),
             }
-            Some("gff3") => {
-                tmp_new_gene_internal(feature, &mut gene, gff::GffType::GFF3);
-            }
-            Some("gtf") => {
-                tmp_new_gene_internal(feature, &mut gene, gff::GffType::GTF2);
-            }
-            _ => println!("Unsupported format {:?}", path),
-        }
         }
         gene_per_ref.insert(data.name.clone(), gene);
     }
@@ -231,12 +224,12 @@ pub fn tmp_new(graph: GraphDB, config: &Config, db_name: String, rocksdb_init: &
             println!("{}", version);
             return Database {
                 features: vec,
-                    //coordinates: coord,
+                //coordinates: coord,
                 rocks: db_name,
                 gene_name_tree: gene_per_ref,
                 graph: VG(graph2),
                 version: version,
-            }
+            };
         }
     };
 }
@@ -258,37 +251,38 @@ fn tmp_new_gene_internal(feature: &ConfigFeature, gene: &mut GeneNameTree, gff_t
     for record in reader.records() {
         index += 1;
         match record {
-            Ok(rec) => {
-                match rec.feature_type() {
-                    "gene" => {
-                        let reg = match opt_strand_to_opt_bool(rec.strand()) {
-                            Some(false) => Region {
-                                path: rec.seqname().to_string(),
-                                stop: *rec.start(),
-                                start: *rec.end(),
-                            },
-                            _ => Region {
-                                path: rec.seqname().to_string(),
-                                start: *rec.start(),
-                                stop: *rec.end(),
-                            },
-                        };
-                        match rec.attributes().get("gene_name") {
-                            Some(name) => gene.insert(name.clone().to_string(), reg),
-                            None => continue,
-                        };
-                    }
-                    _ => continue,
+            Ok(rec) => match rec.feature_type() {
+                "gene" => {
+                    let reg = match opt_strand_to_opt_bool(rec.strand()) {
+                        Some(false) => Region {
+                            path: rec.seqname().to_string(),
+                            stop: *rec.start(),
+                            start: *rec.end(),
+                        },
+                        _ => Region {
+                            path: rec.seqname().to_string(),
+                            start: *rec.start(),
+                            stop: *rec.end(),
+                        },
+                    };
+                    match rec.attributes().get("gene_name") {
+                        Some(name) => gene.insert(name.clone().to_string(), reg),
+                        None => continue,
+                    };
                 }
-            }
+                _ => continue,
+            },
             Err(_) => continue,
         }
     }
     debug!("{} lines processed. end.", index);
-
 }
 
-fn tmp_new_internal(feature: &ConfigFeature, _graph: &GraphDB, hashmap: &CoordToNodeId) -> Features {
+fn tmp_new_internal(
+    feature: &ConfigFeature,
+    _graph: &GraphDB,
+    hashmap: &CoordToNodeId,
+) -> Features {
     let bed = &feature.url;
     let path = Path::new(&bed);
     let mut features: Features = Features::new();

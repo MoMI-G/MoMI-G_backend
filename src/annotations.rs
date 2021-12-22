@@ -1,24 +1,24 @@
-use lib::{Config, Database, Region, ConfigFeature};
-use features::{Feature};
+use features::Feature;
+use lib::{Config, ConfigFeature, Database, Region};
+use libbigwig::*;
+use rocks::rocksdb::*;
+use std::collections::HashMap;
+use std::ffi::{CStr, CString};
+use std::mem;
+use std::mem::*;
 use std::path::Path;
 use std::sync::Arc;
-use libbigwig::*;
-use std::ffi::{CString, CStr};
-use rocks::rocksdb::*;
-use std::mem;
-use std::collections::HashMap;
-use std::mem::*;
 
 pub fn node_id_to_region(database: Arc<Database>, node_id: u64) -> Option<Region> {
-    let raw_bytes : [u8; 8] = unsafe {transmute(node_id)};
+    let raw_bytes: [u8; 8] = unsafe { transmute(node_id) };
     let db_name = &database.rocks;
     let db = DB::open(&Options::default(), db_name).unwrap();
     let coord_option = db.get(&ReadOptions::default(), &raw_bytes);
     if let Ok(ref coord_raw) = coord_option {
         let coord_result = Region::new(String::from_utf8(coord_raw.to_vec()).unwrap());
         if let Ok(coord) = coord_result {
-            return Some(coord)
-      }
+            return Some(coord);
+        }
     }
     return None;
 }
@@ -30,7 +30,7 @@ pub fn node_id_to_feature(
     database: Arc<Database>,
     node_id: u64,
 ) -> Vec<Vec<Feature>> {
-    let raw_bytes : [u8; 8] = unsafe {transmute(node_id)};
+    let raw_bytes: [u8; 8] = unsafe { transmute(node_id) };
     let db_name = &database.rocks;
     let db = DB::open(&Options::default(), db_name).unwrap();
     let coord_option = db.get(&ReadOptions::default(), &raw_bytes);
@@ -57,22 +57,47 @@ pub fn node_id_to_feature(
     return vec;
 }
 
-pub fn regions_to_feature(config: &Arc<Config>, track_type: &String, coord: Vec<Region>, bins: Option<u32>) -> Vec<Vec<Vec<Feature>>> {
-  coord.into_iter().map(|a| region_to_feature(config, track_type, a, bins)).collect()
+pub fn regions_to_feature(
+    config: &Arc<Config>,
+    track_type: &String,
+    coord: Vec<Region>,
+    bins: Option<u32>,
+) -> Vec<Vec<Vec<Feature>>> {
+    coord
+        .into_iter()
+        .map(|a| region_to_feature(config, track_type, a, bins))
+        .collect()
 }
 
-pub fn regions_to_feature_map(config: &Arc<Config>, track_type: &String, coord: Vec<Region>, bins: Option<u32>) -> Vec<HashMap<String, Vec<Feature>>> {
-    coord.into_iter().map(|a| region_to_feature_map(config, track_type, a, bins)).collect()
+pub fn regions_to_feature_map(
+    config: &Arc<Config>,
+    track_type: &String,
+    coord: Vec<Region>,
+    bins: Option<u32>,
+) -> Vec<HashMap<String, Vec<Feature>>> {
+    coord
+        .into_iter()
+        .map(|a| region_to_feature_map(config, track_type, a, bins))
+        .collect()
 }
 
-pub fn region_to_feature(config: &Arc<Config>, track_type: &String, coord: Region, bins: Option<u32>) -> Vec<Vec<Feature>> {
+pub fn region_to_feature(
+    config: &Arc<Config>,
+    track_type: &String,
+    coord: Region,
+    bins: Option<u32>,
+) -> Vec<Vec<Feature>> {
     let mut vec: Vec<Vec<Feature>> = vec![];
     for feature in config.data[0].features.iter() {
         let path = Path::new(&feature.url);
         let chr_prefix = "".to_string(); //FIXME() feature.chr_prefix.clone().unwrap_or("".to_string());
         match path.extension().unwrap().to_str() {
-            Some("bed") if *track_type == "bed".to_string() => vec.push(giggle(feature, &coord, chr_prefix)),
-            Some("bb") if *track_type == "bed".to_string() => vec.push(libbigbed_simple(feature, &coord, chr_prefix)),
+            Some("bed") if *track_type == "bed".to_string() => {
+                vec.push(giggle(feature, &coord, chr_prefix))
+            }
+            Some("bb") if *track_type == "bed".to_string() => {
+                vec.push(libbigbed_simple(feature, &coord, chr_prefix))
+            }
             Some("bw") if *track_type == "wig".to_string() => {
                 if let Some(bins) = bins {
                     vec.push(libbigwig_stats(feature, &coord, chr_prefix, bins));
@@ -86,21 +111,39 @@ pub fn region_to_feature(config: &Arc<Config>, track_type: &String, coord: Regio
     vec
 }
 
-pub fn region_to_feature_map(config: &Arc<Config>, track_type: &String, coord: Region, bins: Option<u32>) -> HashMap<String, Vec<Feature>> {
+pub fn region_to_feature_map(
+    config: &Arc<Config>,
+    track_type: &String,
+    coord: Region,
+    bins: Option<u32>,
+) -> HashMap<String, Vec<Feature>> {
     let mut vec: HashMap<String, Vec<Feature>> = HashMap::new();
     for feature in config.data[0].features.iter() {
         let path = Path::new(&feature.url);
         let chr_prefix = "".to_string(); //FIXME() feature.chr_prefix.clone().unwrap_or("".to_string());
         match path.extension().unwrap().to_str() {
-            Some("bed") if *track_type == "bed".to_string() => {vec.insert(feature.url.clone(), giggle(feature, &coord, chr_prefix));},
-            Some("bb") if *track_type == "bed".to_string() => {vec.insert(feature.url.clone(), libbigbed_simple(feature, &coord, chr_prefix));},
+            Some("bed") if *track_type == "bed".to_string() => {
+                vec.insert(feature.url.clone(), giggle(feature, &coord, chr_prefix));
+            }
+            Some("bb") if *track_type == "bed".to_string() => {
+                vec.insert(
+                    feature.url.clone(),
+                    libbigbed_simple(feature, &coord, chr_prefix),
+                );
+            }
             Some("bw") if *track_type == "wig".to_string() => {
                 if let Some(bins) = bins {
-                    vec.insert(feature.url.clone(), libbigwig_stats(feature, &coord, chr_prefix, bins));
+                    vec.insert(
+                        feature.url.clone(),
+                        libbigwig_stats(feature, &coord, chr_prefix, bins),
+                    );
                 } else {
-                    vec.insert(feature.url.clone(), libbigwig_simple(feature, &coord, chr_prefix));
+                    vec.insert(
+                        feature.url.clone(),
+                        libbigwig_simple(feature, &coord, chr_prefix),
+                    );
                 }
-            },
+            }
             _ => debug!("Unsupported format {:?}", path),
         }
     }
@@ -162,10 +205,8 @@ fn libbigbed_simple(feature: &ConfigFeature, coord: &Region, prefix: String) -> 
         );
         if !intervals.is_null() {
             for i in 0..(*intervals).l {
-                let start_offset =
-                    *(*intervals).start.offset(i as isize) as u64;
-                let stop_offset =
-                    *(*intervals).end.offset(i as isize) as u64;
+                let start_offset = *(*intervals).start.offset(i as isize) as u64;
+                let stop_offset = *(*intervals).end.offset(i as isize) as u64;
                 let name = CStr::from_ptr(*(*intervals).str.offset(i as isize))
                     .to_str()
                     .unwrap()
@@ -181,7 +222,6 @@ fn libbigbed_simple(feature: &ConfigFeature, coord: &Region, prefix: String) -> 
                     value: None,
                 });
             }
-
         }
 
         if intervals.is_null() {
@@ -217,12 +257,11 @@ fn libbigbed(feature: &ConfigFeature, coord: &Region, prefix: String) -> Vec<Fea
         );
         if !intervals.is_null() {
             for i in 0..(*intervals).l {
-                let start_offset =
-                    if *(*intervals).start.offset(i as isize) <= coord.start as u32 {
-                        0
-                    } else {
-                        *(*intervals).start.offset(i as isize) as u64 - coord.start
-                    };
+                let start_offset = if *(*intervals).start.offset(i as isize) <= coord.start as u32 {
+                    0
+                } else {
+                    *(*intervals).start.offset(i as isize) as u64 - coord.start
+                };
                 let stop_offset = if coord.stop <= *(*intervals).end.offset(i as isize) as u64 {
                     0
                 } else {
@@ -243,7 +282,6 @@ fn libbigbed(feature: &ConfigFeature, coord: &Region, prefix: String) -> Vec<Fea
                     value: None,
                 });
             }
-
         }
         if intervals.is_null() {
             bbDestroyOverlappingEntries(intervals);
@@ -257,8 +295,8 @@ fn libbigbed(feature: &ConfigFeature, coord: &Region, prefix: String) -> Vec<Fea
 #[cfg(test)]
 mod tests {
     use super::libbigbed;
-    use lib::{Region, ConfigFeature};
-    use features::{Feature};
+    use features::Feature;
+    use lib::{ConfigFeature, Region};
 
     #[test]
     fn it_doesnot_work() {
@@ -266,7 +304,12 @@ mod tests {
         assert_eq!(
             vec,
             libbigbed(
-                &ConfigFeature{name: "feature".to_owned(), url: "test/ensGene.bb".to_owned(), chr_prefix: None, viz: None},
+                &ConfigFeature {
+                    name: "feature".to_owned(),
+                    url: "test/ensGene.bb".to_owned(),
+                    chr_prefix: None,
+                    viz: None
+                },
                 &Region {
                     path: "Y".to_owned(),
                     start: 2712790,
@@ -279,8 +322,9 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let raw_attr: String = "ENST00000387529\t0\t+\t2712894\t2712894\t0\t1\t104,\t0,\tENSG00000210264\tnull"
-            .to_owned();
+        let raw_attr: String =
+            "ENST00000387529\t0\t+\t2712894\t2712894\t0\t1\t104,\t0,\tENSG00000210264\tnull"
+                .to_owned();
         let attr: Vec<String> = raw_attr.split("\t").map(|s| s.to_string()).collect();
         let feat: Feature = Feature {
             start_offset: 0,
@@ -295,7 +339,12 @@ mod tests {
         assert_eq!(
             vec,
             libbigbed(
-                &ConfigFeature{name: "test/ensGene.bb".to_owned(), url: "test/ensGene.bb".to_owned(), chr_prefix: None, viz: None},
+                &ConfigFeature {
+                    name: "test/ensGene.bb".to_owned(),
+                    url: "test/ensGene.bb".to_owned(),
+                    chr_prefix: None,
+                    viz: None
+                },
                 &Region {
                     path: "Y".to_owned(),
                     start: 2712790,
@@ -305,10 +354,14 @@ mod tests {
             )
         );
     }
-
 }
 
-fn libbigwig_stats(feature: &ConfigFeature, coord: &Region, prefix: String, bins: u32) -> Vec<Feature> {
+fn libbigwig_stats(
+    feature: &ConfigFeature,
+    coord: &Region,
+    prefix: String,
+    bins: u32,
+) -> Vec<Feature> {
     let path = &feature.url;
     let path_loc = CString::new(path.clone()).unwrap();
     let read_only = CString::new("r").unwrap();
@@ -328,12 +381,12 @@ fn libbigwig_stats(feature: &ConfigFeature, coord: &Region, prefix: String, bins
             coord.start as u32,
             coord.stop as u32,
             bins,
-            0 as i32 // Average
+            0 as i32, // Average
         );
         if !intervals.is_null() {
             let len = bins as usize;
-            let ptr = intervals as *const f32 ;
-            let slice = std::slice::from_raw_parts( ptr, len );
+            let ptr = intervals as *const f32;
+            let slice = std::slice::from_raw_parts(ptr, len);
             for i in 0..bins {
                 //let start_offset =
                 //    *(*intervals).start.offset(i as isize) as u64;
@@ -348,9 +401,7 @@ fn libbigwig_stats(feature: &ConfigFeature, coord: &Region, prefix: String, bins
                     attributes: vec![],
                     is_reverse: None,
                     value: Some(slice[i as usize]),
-                }
-                )
-                    ;
+                });
             }
         }
 
@@ -382,14 +433,12 @@ fn libbigwig_simple(feature: &ConfigFeature, coord: &Region, prefix: String) -> 
             fp,
             path_str.into_raw(),
             coord.start as u32,
-            coord.stop as u32
+            coord.stop as u32,
         );
         if !intervals.is_null() {
             for i in 0..(*intervals).l {
-                let start_offset =
-                    *(*intervals).start.offset(i as isize) as u64;
-                let stop_offset =
-                    *(*intervals).end.offset(i as isize) as u64;
+                let start_offset = *(*intervals).start.offset(i as isize) as u64;
+                let stop_offset = *(*intervals).end.offset(i as isize) as u64;
                 let value = *(*intervals).value.offset(i as isize);
                 vec.push(Feature {
                     start_offset: start_offset,
@@ -440,12 +489,11 @@ fn libbigwig(feature: &ConfigFeature, coord: &Region, prefix: String) -> Vec<Fea
                     } else {
                         *(*intervals).start.offset(i as isize) as u64 - coord.start
                     };
-                let stop_offset =
-                    if coord.stop as u32 - *(*intervals).end.offset(i as isize) <= 0 {
-                        0
-                    } else {
-                        coord.stop - *(*intervals).end.offset(i as isize) as u64
-                    };
+                let stop_offset = if coord.stop as u32 - *(*intervals).end.offset(i as isize) <= 0 {
+                    0
+                } else {
+                    coord.stop - *(*intervals).end.offset(i as isize) as u64
+                };
                 let value = *(*intervals).value.offset(i as isize);
                 vec.push(Feature {
                     start_offset: start_offset,
