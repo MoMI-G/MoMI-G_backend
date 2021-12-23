@@ -1,8 +1,8 @@
 use bio::io::{bed, gff};
 use bio::utils::Strand;
 use bio::utils::Strand::*;
-use lib::{Config, ConfigFeature};
-use lib::{Database, GeneNameEachReference, GeneNameTree, Region};
+use crate::lib::{Config, ConfigFeature};
+use crate::lib::{Database, GeneNameEachReference, GeneNameTree, Region};
 use rocks::rocksdb::*;
 use std::collections::HashMap;
 use std::error::Error;
@@ -10,8 +10,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::mem::*;
 use std::path::Path;
-use vg::GraphDB;
-use vg::GraphDB::VG;
+use crate::vg::GraphDB;
+use crate::vg::GraphDB::VG;
 
 // NodeId to corresponding feature items.
 type Features = HashMap<u64, Vec<Feature>>;

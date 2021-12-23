@@ -1,7 +1,7 @@
 extern crate time;
 
 use iron::Url;
-use lib::{Config, Database, OptionalRegion};
+use crate::lib::{Config, OptionalRegion};
 use regex::Regex;
 use std::fs::metadata;
 use std::fs::File;
@@ -10,7 +10,7 @@ use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use std::process::Stdio;
-use Args;
+use crate::Args;
 
 // Unix-only methods.
 use std::os::unix::io::{AsRawFd, FromRawFd};
@@ -37,27 +37,27 @@ pub trait Graph {
     fn nodes_list(&self);
     fn generate_graph_to_file(
         &self,
-        OptionalRegion,
-        i64,
-        &File,
-        &Option<i64>,
-        &Config,
-        &String,
-        bool,
-        &String,
+        _: OptionalRegion,
+        _: i64,
+        _: &File,
+        _: &Option<i64>,
+        _: &Config,
+        _: &String,
+        _: bool,
+        _: &String,
     ) -> Result<bool, Error>;
     fn generate_graph_to_file_wo_helper(
         &self,
-        OptionalRegion,
-        i64,
-        &Path,
-        &Option<i64>,
-        &Config,
-        &String,
-        bool,
-        &String,
-        bool,
-        i32,
+        _: OptionalRegion,
+        _: i64,
+        _: &Path,
+        _: &Option<i64>,
+        _: &Config,
+        _: &String,
+        _: bool,
+        _: &String,
+        _: bool,
+        _: i32,
     ) -> Result<bool, Error>;
     fn version(&self, config: &Config) -> i32;
 }

@@ -1,4 +1,4 @@
-FROM buildpack-deps:xenial as build
+FROM buildpack-deps:bionic as build
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -16,14 +16,16 @@ RUN set -eux; \
     mkdir /usr/src/app;
 
 RUN apt-get update && apt-get install -y \
-		cmake clang \
+		cmake clang python-pip \
 	&& rm -rf /var/lib/apt/lists/*
+
+RUN pip install cmake
 
 WORKDIR /usr/src/app
 
 COPY . .
 
-RUN rustup override set nightly-2020-02-06 # https://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
+#RUN rustup override set nightly-2020-02-06 # https://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
 
 RUN cargo build --release; \
     rm -rf src/;
@@ -42,7 +44,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 
 # Add dependency
 RUN apt-get update && apt-get install -y \
-		ruby \
+		ruby  \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Create app directory
