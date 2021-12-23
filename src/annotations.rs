@@ -1,5 +1,5 @@
-use features::Feature;
-use lib::{Config, ConfigFeature, Database, Region};
+use crate::features::Feature;
+use crate::lib::{Config, ConfigFeature, Database, Region};
 use libbigwig::*;
 use rocks::rocksdb::*;
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ pub fn node_id_to_feature(
     let coord_option = db.get(&ReadOptions::default(), &raw_bytes);
     let mut vec: Vec<Vec<Feature>> = vec![];
     if let Ok(ref coord_raw) = coord_option {
-        let mut coord_result = Region::new(String::from_utf8(coord_raw.to_vec()).unwrap());
+        let coord_result = Region::new(String::from_utf8(coord_raw.to_vec()).unwrap());
         if let Ok(mut coord) = coord_result {
             coord.start_minus();
             for feature in config.data[0].features.iter() {
@@ -296,8 +296,8 @@ fn libbigbed(feature: &ConfigFeature, coord: &Region, prefix: String) -> Vec<Fea
 #[cfg(test)]
 mod tests {
     use super::libbigbed;
-    use features::Feature;
-    use lib::{ConfigFeature, Region};
+    use crate::features::Feature;
+    use crate::lib::{ConfigFeature, Region};
 
     #[test]
     fn it_doesnot_work() {

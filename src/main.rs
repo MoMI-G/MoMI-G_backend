@@ -1,6 +1,5 @@
 #![feature(rustc_private)]
 #![feature(plugin)]
-#![feature(extern_prelude)]
 #![allow(dead_code)] // Remove at release.
 
 #[macro_use]
@@ -37,13 +36,13 @@ mod lib;
 mod utils;
 mod vg;
 
-use features::tmp_new;
-use handlers::*;
+use crate::features::tmp_new;
+use crate::handlers::*;
 use iron::prelude::*;
 use iron::Iron;
 use logger::Logger;
 use router::Router;
-use vg::GraphDB;
+use crate::vg::GraphDB;
 
 use mount::Mount;
 use staticfile::Static;
@@ -51,7 +50,7 @@ use std::path::Path;
 use std::process;
 
 use docopt::Docopt;
-use vg::VG;
+use crate::vg::VG;
 
 const USAGE: &'static str = "
 MoMI-G: Modular Multi-scale Integrated Genome Graph Browser Backend.

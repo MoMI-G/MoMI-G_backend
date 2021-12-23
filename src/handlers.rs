@@ -11,23 +11,23 @@ use std::fs::{metadata, File};
 use std::io::Read;
 use std::path::Path;
 
-use annotations::*;
-use features::Feature;
-use handlers::params::{Params, Value};
+use crate::annotations::*;
+
+use crate::handlers::params::{Params, Value};
 use iron::headers::ContentType;
 use iron::modifiers::Redirect;
 use iron::prelude::*;
 use iron::{status, AfterMiddleware, Handler, IronResult, Request, Response};
-use lib::{Config, Database, OptionalRegion, Region};
+use crate::lib::{Config, Database, OptionalRegion, Region};
 use multipart::server::save::Entries;
 use multipart::server::save::SaveResult;
 use multipart::server::Multipart;
 use router::Router;
 use std::collections::BTreeMap;
 use std::sync::Arc;
-use utils::url_compose;
-use vg::{Graph, GraphDB};
-use Args;
+use crate::utils::url_compose;
+use crate::vg::{Graph, GraphDB};
+use crate::Args;
 
 /// Match a `Result` into its inner value or
 /// return `500 Internal Server Error`,
@@ -205,7 +205,7 @@ impl Handler for OverViewHandler {
                                 ));
                                 Ok(Response::with((status::Found, Redirect(url))))
                             }
-                            None => Ok(Response::with((status::NoContent))),
+                            None => Ok(Response::with(status::NoContent)),
                         }
                     }
                 }
@@ -231,7 +231,7 @@ impl Handler for OverViewHandler {
                 let post = try_handler!(serde_json::to_string(&json), status::BadRequest);
                 return Ok(Response::with((status::Ok, post)));
             }
-            _ => Ok(Response::with((status::BadRequest))),
+            _ => Ok(Response::with(status::BadRequest)),
         }
     }
 }
@@ -351,10 +351,10 @@ impl Handler for FeatureHandler {
                                 try_handler!(serde_json::to_string(&region), status::BadRequest);
                             Ok(Response::with((status::Ok, retval)))
                         }
-                        None => Ok(Response::with((status::NoContent))),
+                        None => Ok(Response::with(status::NoContent)),
                     },
                     Err(_) => {
-                        let mut feature_opt = self
+                        let feature_opt = self
                             .database
                             .gene_name_tree
                             .get(&reference)
@@ -368,11 +368,11 @@ impl Handler for FeatureHandler {
                                 );
                                 Ok(Response::with((status::Ok, retval)))
                             }
-                            None => Ok(Response::with((status::NoContent))),
+                            None => Ok(Response::with(status::NoContent)),
                         }
                     }
                 },
-                None => Ok(Response::with((status::BadRequest))),
+                None => Ok(Response::with(status::BadRequest)),
             },
         }
     }
@@ -533,7 +533,7 @@ impl Handler for UploadHandler {
                 let cache_file = try_handler!(File::create(cache_path));
                 match self.database.graph {
                     GraphDB::VG(ref vg) => match path_struct.inverted() {
-                        Some(true) => Ok(Response::with((status::BadRequest))),
+                        Some(true) => Ok(Response::with(status::BadRequest)),
                         _ => {
                             let generate_cache = try_handler!(vg.generate_graph_to_file_custom(
                                 path_struct,
@@ -547,7 +547,7 @@ impl Handler for UploadHandler {
                             ));
                             match generate_cache {
                                 true => Ok(Response::with((status::Found, Redirect(url)))),
-                                false => Ok(Response::with((status::InternalServerError))),
+                                false => Ok(Response::with(status::InternalServerError)),
                             }
                         }
                     },
@@ -642,7 +642,7 @@ impl Handler for GraphHandler {
                                 };
                                 match generate_cache {
                                     true => Ok(Response::with((status::Found, Redirect(url)))),
-                                    false => Ok(Response::with((status::InternalServerError))),
+                                    false => Ok(Response::with(status::InternalServerError)),
                                 }
                             }
                             None => {
@@ -672,7 +672,7 @@ impl Handler for GraphHandler {
                                 };
                                 match generate_cache {
                                     true => Ok(Response::with((status::Found, Redirect(url)))),
-                                    false => Ok(Response::with((status::InternalServerError))),
+                                    false => Ok(Response::with(status::InternalServerError)),
                                 }
                             }
                         },
@@ -694,12 +694,12 @@ impl AfterMiddleware for JsonAfterMiddleware {
 
 #[cfg(test)]
 mod test {
-    use features;
+    use crate::features;
     use iron::Headers;
-    use lib;
+    use crate::lib;
     use serde_yaml;
-    use utils::file_read;
-    use vg::VG;
+    use crate::utils::file_read;
+    use crate::vg::VG;
 
     use self::iron_test::*;
 
