@@ -1,4 +1,4 @@
-FROM buildpack-deps:focal as build
+FROM buildpack-deps:bionic as build
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -18,6 +18,8 @@ RUN set -eux; \
 RUN apt-get update && apt-get install -y \
 		cmake clang \
 	&& rm -rf /var/lib/apt/lists/*
+
+RUN pip install cmake
 
 WORKDIR /usr/src/app
 
@@ -42,7 +44,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 
 # Add dependency
 RUN apt-get update && apt-get install -y \
-		ruby \
+		ruby  \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Create app directory
