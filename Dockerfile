@@ -16,7 +16,7 @@ RUN set -eux; \
     mkdir /usr/src/app;
 
 RUN apt-get update && apt-get install -y \
-		cmake clang \
+		cmake clang python-pip \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN pip install cmake
