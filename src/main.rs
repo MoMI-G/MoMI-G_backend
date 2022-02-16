@@ -77,6 +77,7 @@ Options:
   -r --reinitrocks  Reinitialize rocks db if true.
   -n --notest  Do not run tests whether vg works.
   -i --onlyinit  Initialize and exit.
+  -u --upload  Permit upload option.
   -v --verbose  Force verbose.
 ";
 
@@ -88,6 +89,7 @@ pub struct Args {
     flag_verbose: bool,
     flag_reinitrocks: bool,
     flag_cache: bool,
+    flag_upload: bool,
     flag_config: String,
     flag_http: String,
     flag_tmp: String,
@@ -154,7 +156,9 @@ fn main() {
     router.get("graph", handlers.graph, "graph");
     router.get("overview", handlers.overview, "overview");
     router.post("render", handlers.upload, "fetch");
-    router.post("upload", handlers.multi_part, "multi");
+    if *flag_upload {
+        router.post("upload", handlers.multi_part, "multi");
+    }
 
     let mut chain = Chain::new(router);
     //chain.link_before(logger_before); // Should be first!
