@@ -139,6 +139,7 @@ fn main() {
     let build_str = &args.flag_build.clone();
     let build_path = Path::new(build_str);
     let flag_serve = &args.flag_serve.clone();
+    let flag_upload = &args.flag_serve.clone();
 
     if args.flag_onlyinit {
         println!("Initialization completion");
