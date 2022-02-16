@@ -45,7 +45,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
 
 RUN apt-get update && apt-get install -y \
-		ruby npm nodejs git \
+		ruby nodejs git \
 	&& rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
