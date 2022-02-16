@@ -31,7 +31,6 @@ RUN cargo build --release; \
     rm -rf src/;
 
 # ---------------------------
-# frontend container
 FROM quay.io/vgteam/vg:v1.25.0
 
 ARG BUILD_DATE
@@ -44,8 +43,12 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 
 # Add dependency
 RUN apt-get update && apt-get install -y \
-		ruby  \
+		ruby npm nodejs \
 	&& rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN npm install --global yarn && git clone https://github.com/MoMI-G/MoMI-G && cd MoMI-G && yarn && yarn build && cp -r build /vg/static/
 
 # Create app directory
 WORKDIR /vg
