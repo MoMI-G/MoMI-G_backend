@@ -42,7 +42,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.schema-version="1.0.0"
 
 # Add dependency
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
 
 RUN apt-get update && apt-get install -y \
 		ruby npm nodejs git \
