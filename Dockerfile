@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /build
 
-RUN npm install --global yarn && git clone https://github.com/MoMI-G/MoMI-G && cd MoMI-G && yarn && yarn build && cp -r build /vg/static/
+RUN npm install --global yarn && git clone https://github.com/MoMI-G/MoMI-G && cd MoMI-G && yarn && yarn build && cp -r build /vg/build
 
 # Create app directory
 WORKDIR /vg
@@ -65,4 +65,4 @@ EXPOSE 8081
 
 ENV RUST_LOG info,graph_genome_browser_backend=debug
 
-CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"] 
+CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/", "--serve", "--build=build"]
