@@ -5,6 +5,8 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
     RUSTFLAGS="-C target-feature=-avx2"
 
+RUN grep sse /proc/cpuinfo
+
 RUN set -eux; \
     \
     url="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"; \
