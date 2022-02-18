@@ -3,7 +3,9 @@ FROM buildpack-deps:bionic as build
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUSTFLAGS="-C target-feature=-avx2"
+    RUSTFLAGS="-C link-arg=-fuse-ld=lld -C target-feature=-avx2,-avx512f,-avx512dq,-avx512vl,-xsavec,-avx512bw,-avx512cd,-xsaveopt,-xsaves,-rtm,-rdseed,-adx,-clflushopt -C target-cpu=haswell"
+
+RUN grep sse /proc/cpuinfo
 
 RUN set -eux; \
     \
@@ -16,7 +18,7 @@ RUN set -eux; \
     mkdir /usr/src/app;
 
 RUN apt-get update && apt-get install -y \
-		cmake clang python-pip \
+		cmake clang python-pip lld \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN pip install cmake
@@ -25,13 +27,10 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-#RUN rustup override set nightly-2020-02-06 # https://github.com/rust-bio/rust-bio/blob/master/src/data_structures/bit_tree.rs#L33
-
 RUN cargo build --release; \
     rm -rf src/;
 
 # ---------------------------
-# frontend container
 FROM quay.io/vgteam/vg:v1.25.0
 
 ARG BUILD_DATE
@@ -43,9 +42,15 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.schema-version="1.0.0"
 
 # Add dependency
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+
 RUN apt-get update && apt-get install -y \
-		ruby  \
+		ruby nodejs git \
 	&& rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN npm install --global yarn && git clone https://github.com/MoMI-G/MoMI-G && cd MoMI-G && yarn && yarn build && cp -r build /vg/build
 
 # Create app directory
 WORKDIR /vg
@@ -62,4 +67,4 @@ EXPOSE 8081
 
 ENV RUST_LOG info,graph_genome_browser_backend=debug
 
-CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/"] 
+CMD ["./graph-genome-browser-backend", "--config=static/config.yaml", "--interval=1500000", "--http=0.0.0.0:8081", "--api=/api/v2/", "--serve", "--build=build"]

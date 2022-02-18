@@ -36,3 +36,9 @@ yaml-rust = "*"
 version = "0.1.10"
 default-features = false
 features = ["static-link"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+overflow-checks = false
+debug = true

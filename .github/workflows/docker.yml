@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - 'master'
-      - 'rocks'
+      - 'static'
+  schedule:
+    - cron: "0 0 * * 0"
 
 jobs:
   docker:

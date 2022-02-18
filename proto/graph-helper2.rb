@@ -20,11 +20,10 @@ def add_coordinate(json_data)
     json_data['path'].each_with_index do |path, index|
       node_list = path['mapping'].map{|t| t['position']['node_id']}.join(" ")
       next if path['name'].length >= 24 #chr12_KI270713v1_random
+      cmd = [BIN, "find -N <( echo", node_list, ") -P", path['name'], "-x", XG]
       if BIN_DOCKER == []
-        cmd = [BIN, "find -N <( echo", node_list, ") -P", path['name'], "-x", XG]
         cmd2 = ["bash", "-c \"", cmd.join(" "), "\""]
       else
-        cmd = [BIN, "find -N <( echo", node_list, ") -P", path['name'], "-x", XG]
         cmd2 = [BIN_DOCKER, "bash", "-c \"", cmd.join(" "), "\""]
       end
       o,_,_ = Open3.capture3(cmd2.join(" "))
@@ -33,7 +32,7 @@ def add_coordinate(json_data)
         json_data['path'][index]['indexOfFirstBase'] = o.split("\n").map{|t| t.split("\t")}[0][1].to_i
         o.split("\n").map{|t| t.split("\t")}.each do |t|
           if t.length > 1
-            node_index = json_data['path'][index]["mapping"].find_index{ |i|  i["position"]["node_id"] == t[0] }
+            node_index = json_data['path'][index]["mapping"].find_index{ |i| i["position"]["node_id"].to_i == t[0].to_i }
             json_data['path'][index]['mapping'][node_index]["position"]["coordinate"] = t[1].to_i if node_index
           end
         end
