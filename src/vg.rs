@@ -484,6 +484,7 @@ impl Graph for VG {
                 xgpath.as_ref(),
                 &path.path,
                 chr_prefix.as_ref(),
+                chunk_prefix.as_ref(),
             ])
             .stdin(unsafe { Stdio::from_raw_fd(command2.stdout.as_ref().unwrap().as_raw_fd()) })
             .stdout(out)
