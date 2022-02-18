@@ -8,8 +8,8 @@ require 'open3'
 bin = ARGV[0]
 XG = ARGV[1]
 path = ARGV[2]
-CHR_PREFIX = ARGV[3] ? ARGV[3] : "chr"
-chunk_prefix = ARGV[4] if ARGV[4]
+chunk_prefix = ARGV[3] if ARGV[3]
+CHR_PREFIX = ARGV[4] ? ARGV[4] : "chr"
 
 bin = bin.split(" ") if bin
 BIN_DOCKER = bin ? bin[0..-2] : "echo"
