@@ -20,11 +20,10 @@ def add_coordinate(json_data)
     json_data['path'].each_with_index do |path, index|
       node_list = path['mapping'].map{|t| t['position']['node_id']}.join(" ")
       next if path['name'].length >= 24 #chr12_KI270713v1_random
+      cmd = [BIN, "find -N <( echo", node_list, ") -P", path['name'], "-x", XG]
       if BIN_DOCKER == []
-        cmd = [BIN, "find -N <( echo", node_list, ") -P", path['name'], "-x", XG]
         cmd2 = ["bash", "-c \"", cmd.join(" "), "\""]
       else
-        cmd = [BIN, "find -N <( echo", node_list, ") -P", path['name'], "-x", XG]
         cmd2 = [BIN_DOCKER, "bash", "-c \"", cmd.join(" "), "\""]
       end
       o,_,_ = Open3.capture3(cmd2.join(" "))
