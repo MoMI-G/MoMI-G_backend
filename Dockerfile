@@ -3,7 +3,7 @@ FROM buildpack-deps:bionic as build
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUSTFLAGS="-C link-arg=-fuse-ld=lld -C target-feature=-avx2 -C target-feature=-avx512f -C target-feature=-avx512dq -C target-feature=-avx512vl -C target-feature=-xsavec -C target-feature=-avx512bw -C target-feature=-avx512cd -C target-feature=-xsaveopt -C target-cpu=haswell"
+    RUSTFLAGS="-C link-arg=-fuse-ld=lld -C target-feature=-avx2 -C target-feature=-avx512f -C target-feature=-avx512dq -C target-feature=-avx512vl -C target-feature=-xsavec -C target-feature=-avx512bw -C target-feature=-avx512cd -C target-feature=-xsaveopt -C target-feature=-xsaves -C target-feature=-rtm -C target-feature=-rdseed -C target-feature=-adx -C target-cpu=haswell"
 
 RUN grep sse /proc/cpuinfo
 
