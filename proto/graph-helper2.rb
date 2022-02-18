@@ -8,8 +8,8 @@ require 'open3'
 bin = ARGV[0]
 XG = ARGV[1]
 path = ARGV[2]
-chunk_prefix = ARGV[3] if ARGV[3]
-CHR_PREFIX = ARGV[4] ? ARGV[4] : "chr"
+CHR_PREFIX = ARGV[3] ? ARGV[3] : "chr"
+chunk_prefix = ARGV[4] if ARGV[4]
 
 bin = bin.split(" ") if bin
 BIN_DOCKER = bin ? bin[0..-2] : "echo"
@@ -32,7 +32,7 @@ def add_coordinate(json_data)
         json_data['path'][index]['indexOfFirstBase'] = o.split("\n").map{|t| t.split("\t")}[0][1].to_i
         o.split("\n").map{|t| t.split("\t")}.each do |t|
           if t.length > 1
-            node_index = json_data['path'][index]["mapping"].find_index{ |i|  i["position"]["node_id"] == t[0] }
+            node_index = json_data['path'][index]["mapping"].find_index{ |i| i["position"]["node_id"].to_i == t[0].to_i }
             json_data['path'][index]['mapping'][node_index]["position"]["coordinate"] = t[1].to_i if node_index
           end
         end
