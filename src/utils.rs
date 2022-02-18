@@ -20,8 +20,10 @@ pub fn file_read(path_string: &String, s: &mut String) {
     }
 }
 
-pub fn url_compose(url: &url::Url, path: &str) -> Result<Url, String> {
+pub fn url_compose(url: &iron::Url, path: &str) -> Result<Url, String> {
     // let url: url::Url = url.into();
+    let urls = url.to_string();
+    let url: url::Url = url::Url::parse(&urls).unwrap();
     let origin = url.origin().unicode_serialization();
     let new_url = origin + path;
     // println!("{}", new_url);

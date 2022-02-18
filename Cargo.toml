@@ -26,7 +26,7 @@ params = "*"
 time = "^0.1.44"
 staticfile = "*"
 mount = "*"
-url = "^1.7.2"
+url = "*"
 libbigwig = { git = "https://github.com/6br/libBigWig" }
 flate2 = "*"
 multipart = "^0.13.6"
