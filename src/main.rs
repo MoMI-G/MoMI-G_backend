@@ -25,7 +25,6 @@ extern crate logger;
 extern crate mount;
 extern crate router;
 extern crate staticfile;
-extern crate time;
 
 extern crate flate2;
 

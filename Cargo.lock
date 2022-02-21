@@ -673,7 +673,6 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "staticfile",
- "time",
  "url 2.2.2",
  "yaml-rust",
 ]

@@ -1,5 +1,3 @@
-extern crate time;
-
 use iron::Url;
 use crate::lib::{Config, OptionalRegion};
 use regex::Regex;
@@ -11,6 +9,7 @@ use std::path::Path;
 use std::process::Command;
 use std::process::Stdio;
 use crate::Args;
+use crate::utils::time;
 
 // Unix-only methods.
 use std::os::unix::io::{AsRawFd, FromRawFd};
@@ -141,7 +140,7 @@ impl VG {
             xgpath = url
                 .path()
                 .last()
-                .unwrap_or(&(time::now().to_timespec().sec.to_string() + ".xg").as_ref())
+                .unwrap_or(&(time().to_string() + ".xg").as_ref())
                 .to_string(); // unwrap();
             xgpath = format!("{}/xg/{}", args.flag_tmp, xgpath);
             if let Err(_) = metadata(Path::new(&xgpath)) {
@@ -151,7 +150,7 @@ impl VG {
             }
         } else {
             if xgpath == "" {
-                xgpath = time::now().to_timespec().sec.to_string() + ".json";
+                xgpath = time().to_string() + ".json";
             }
             xgpath = format!("{}/xg/{}", args.flag_tmp, xgpath);
         }

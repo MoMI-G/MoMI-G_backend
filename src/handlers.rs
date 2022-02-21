@@ -2,7 +2,6 @@
 extern crate iron_test;
 extern crate params;
 extern crate serde_json;
-extern crate time;
 
 use iron_send_file::send_file;
 use std::error::Error;
@@ -26,6 +25,7 @@ use router::Router;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use crate::utils::url_compose;
+use crate::utils::time;
 use crate::vg::{Graph, GraphDB};
 use crate::Args;
 
@@ -422,7 +422,7 @@ impl MultiPartHandler {
                         // when vcf file
                         json.insert("remote_file", path.clone());
                         let post = try_handler!(serde_json::to_string(&json), status::BadRequest);
-                        let _cache_filename = time::now().to_timespec().sec.to_string();
+                        let _cache_filename = time().to_string();
                         let reference = entries.fields.get("ref");
                         // Fork post option.
                         match self.database.graph {
@@ -519,7 +519,7 @@ impl Handler for UploadHandler {
             &self.config.data[0].chr_prefix
         ));
         info!("{}", path_struct);
-        let cache_filename = time::now().to_timespec().sec.to_string() + ".json";
+        let cache_filename = time().to_string() + ".json";
         let cache_str = self.args.flag_tmp.clone() + "/" + &cache_filename;
         let cache_path = Path::new(&cache_str);
         let url = try_handler_string!(url_compose(

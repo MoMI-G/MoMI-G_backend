@@ -4,6 +4,15 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use url;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+pub fn time() -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    return since_the_epoch.as_secs()
+}
 
 pub fn file_read(path_string: &String, s: &mut String) {
     let path = Path::new(path_string);
